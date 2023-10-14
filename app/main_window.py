@@ -23,7 +23,7 @@ class MyWidget(QtWidgets.QWidget):
         self.main_layout.addWidget(self.layout)
 
         groupbox_timeline = QtWidgets.QGroupBox("Timeline")
-        groupbox_timeline.setMaximumHeight(150)
+        groupbox_timeline.setMaximumHeight(130)
         timeline_overall = QtWidgets.QVBoxLayout()
         timeline_buttons = QtWidgets.QHBoxLayout()
         timeline_button_back_to_start = QtWidgets.QPushButton("Back to start")
@@ -35,6 +35,7 @@ class MyWidget(QtWidgets.QWidget):
         timeline_overall.addLayout(timeline_buttons)
         timeline_overall.addLayout(timeline_buttons)
         timeline_scroll_area = QtWidgets.QScrollArea()
+        timeline_scroll_area.setVerticalScrollBarPolicy(QtWidgets.QScrollArea.verticalScrollBarPolicy(timeline_scroll_area).ScrollBarAlwaysOff)
         timeline_scroll_stub = QtWidgets.QWidget()
         timeline_cells_vbox = QtWidgets.QVBoxLayout()
         timeline_cells = QtWidgets.QHBoxLayout()
@@ -51,7 +52,7 @@ class MyWidget(QtWidgets.QWidget):
     def tabular_page_ui(self):
         layout = QtWidgets.QVBoxLayout(self.tabular_page)
         groupbox_state = QtWidgets.QGroupBox("State")
-        groupbox_state.setMaximumHeight(120)
+        groupbox_state.setMaximumHeight(100)
         scroll_area_state = QtWidgets.QScrollArea()
         scroll_area_state.setVerticalScrollBarPolicy(QtWidgets.QScrollArea.verticalScrollBarPolicy(scroll_area_state).ScrollBarAlwaysOff)
         scroll_stub_state = QtWidgets.QWidget()

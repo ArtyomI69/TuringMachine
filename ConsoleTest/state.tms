@@ -1,0 +1,9 @@
+@current_state: state_seek
+@current_index: 0
+@alphabet: _ 0 1
+@default_cell_state: _
+
+#------------------------
+
+0: 0 1 0 0 0 1 1 1 _ _ _ 1 1 1 0
+73: 1 0 0 1 0

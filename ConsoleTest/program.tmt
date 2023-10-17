@@ -1,0 +1,10 @@
+@max_transitions: inf
+
+#--------------------
+
+state_seek _ -> state_seek _ R
+state_seek 0 -> state_invert 0 N
+state_seek 1 -> state_invert 1 N
+state_invert 0 -> state_invert 1 R
+state_invert 1 -> state_invert 0 R
+state_invert _ -> state_stop _ N

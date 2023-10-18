@@ -14,6 +14,7 @@ class TuringMachine:
         self.__max_transitions = prog[0]
         self.__program = prog[1]
         self.__step_count = 0
+        self.__rev = []
 
     @property
     def current_state(self):
@@ -51,13 +52,14 @@ class TuringMachine:
     def step_count(self):
         return self.__step_count
 
-    def step(self):
+    def step_forward(self):
         current_letter = self.__tape_read_at(self.__current_index)
         key = self.__current_state + " " + current_letter
         if (key in self.__program) and (self.__step_count < self.__max_transitions):
             next_state = self.__program[key][0]
             letter = self.__program[key][1]
             shift = self.__program[key][2]
+            self.__rev.append([self.__current_state, current_letter, -shift])
             self.__tape_write_at(self.__current_index, letter)
             self.__shift(shift)
             self.__current_state = next_state
@@ -66,8 +68,26 @@ class TuringMachine:
         else:
             return False
 
-    def run(self):
-        while self.step():
+    def step_backward(self):
+        if self.__step_count > 0:
+            item = self.__rev.pop()
+            prev_state = item[0]
+            prev_letter = item[1]
+            shift = item[2]
+            self.__current_state = prev_state
+            self.__shift(shift)
+            self.__tape_write_at(self.__current_index, prev_letter)
+            self.__step_count -= 1
+            return True
+        else:
+            return False
+
+    def run_forward(self):
+        while self.step_forward():
+            pass
+
+    def run_backward(self):
+        while self.step_backward():
             pass
 
     def __shift(self, shift):

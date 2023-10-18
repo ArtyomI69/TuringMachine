@@ -10,7 +10,11 @@ if __name__ == '__main__':
     # print(tm.tape_negative)
     # print(tm.max_transitions)
     # print(tm.program)
+    # print(tm)
+    # tm.run()
+    # print(tm)
     print(tm)
-    tm.run()
+    tm.run_forward()
     print(tm)
-
+    tm.run_backward()
+    print(tm)

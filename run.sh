@@ -1,4 +1,4 @@
-﻿#/bin/bash
+﻿#!/bin/bash
 
 # Check if venv folder exists
 if [ ! -d "venv" ]; then

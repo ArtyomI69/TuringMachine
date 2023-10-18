@@ -1,7 +1,5 @@
 ﻿@echo off
 
-set env_active=false
-
 rem Check if venv folder exists
 if not exist venv (
     echo Virtual environment does not exist. Creating...
@@ -9,18 +7,22 @@ if not exist venv (
     echo Virtual environment created.
     
     rem Activate the virtual environment
+    echo Activating venv
     venv\Scripts\activate.bat
+    echo Activated venv
+
     set env_active=true
     rem Install packages from requirements.txt
+    echo Installing packages
     pip install -r requirements.txt
-)
-
-if not %env_active%(
-    venv\Scripts\activate.bat
+    echo Installed packages
+    
+    echo Deactivating venv
+    deactivate
+    echo Deactivated venv
 )
 
 rem Launch the app
-python3 app\main_window.py
-
-rem Deactivate the virtual environment
-deactivate
+echo Launching app
+.\venv\Scripts\python.exe .\app\main_window.py
+echo Exited app

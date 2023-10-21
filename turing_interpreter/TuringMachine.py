@@ -1,16 +1,30 @@
-from turing_interpreter.Parser import parse_state_file, parse_program_file
+from turing_interpreter.Parser import *
 
 
 class TuringMachine:
-    def __init__(self, state_file_name, program_file_name):
-        state = parse_state_file(state_file_name)
+    # def __init__(self, state_file_name, program_file_name):
+    #     state = parse_state_file(state_file_name)
+    #     self.__current_state = state[0]
+    #     self.__current_index = state[1]
+    #     self.__alphabet = state[2]
+    #     self.__default_cell_state = state[3]
+    #     self.__tape_positive = state[4]
+    #     self.__tape_negative = []
+    #     prog = parse_program_file(program_file_name, self.__alphabet)
+    #     self.__max_transitions = prog[0]
+    #     self.__program = prog[1]
+    #     self.__step_count = 0
+    #     self.__rev = []
+
+    def __init__(self, state_string, program_string):
+        state = parse_state_string(state_string)
         self.__current_state = state[0]
         self.__current_index = state[1]
         self.__alphabet = state[2]
         self.__default_cell_state = state[3]
         self.__tape_positive = state[4]
         self.__tape_negative = []
-        prog = parse_program_file(program_file_name, self.__alphabet)
+        prog = parse_program_string(program_string, self.__alphabet)
         self.__max_transitions = prog[0]
         self.__program = prog[1]
         self.__step_count = 0

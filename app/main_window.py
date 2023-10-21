@@ -11,20 +11,24 @@ class MyWidget(QtWidgets.QWidget):
         self.setWindowTitle("Turing Machine")
         self.setWindowIcon(QtGui.QIcon("Assets/icon.png"))
 
+        self.current_tick = 0
+        self.current_cell = 0
+        self.time_per_transition = 0.75
+
         self.tabular_page = QtWidgets.QWidget(self)
         self.tabular_page_ui()
         self.program_page = QtWidgets.QWidget(self)
         self.program_page_ui()
+        self.options_page = QtWidgets.QWidget(self)
+        self.options_page_ui()
 
         self.layout = QtWidgets.QTabWidget(self)
         self.layout.addTab(self.tabular_page, "Tabular")
         self.layout.addTab(self.program_page, "Program")
+        self.layout.addTab(self.options_page, "Options")
 
         self.main_layout = QtWidgets.QVBoxLayout(self)
         self.main_layout.addWidget(self.layout)
-
-        self.current_tick = 0
-        self.current_cell = 0
 
         groupbox_timeline = QtWidgets.QGroupBox("Timeline")
         groupbox_timeline.setMaximumHeight(130)
@@ -83,14 +87,51 @@ class MyWidget(QtWidgets.QWidget):
 
     def program_page_ui(self):
         fields = QtWidgets.QHBoxLayout(self.program_page)
+
+        def load_program():
+            dialog = QtWidgets.QFileDialog()
+            dialog.setFileMode(QtWidgets.QFileDialog.ExistingFile)
+            dialog.setNameFilter("Turing Machine Transitions files (*.tmt)")
+            if dialog.exec():
+                filename = dialog.selectedFiles()[0]
+                with open(filename, "r") as file:
+                    self.text_program.setText(file.read())
+
+        def save_program():
+            dialog = QtWidgets.QFileDialog()
+            dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
+            dialog.setNameFilter("Turing Machine Transitions files (*.tmt)")
+            if dialog.exec():
+                filename = dialog.selectedFiles()[0]
+                with open(filename, "w") as file:
+                    file.write(self.text_program.toPlainText())
+
+        def load_starting_state():
+            dialog = QtWidgets.QFileDialog()
+            dialog.setFileMode(QtWidgets.QFileDialog.ExistingFile)
+            dialog.setNameFilter("Turing Machine State files (*.tms)")
+            if dialog.exec():
+                filename = dialog.selectedFiles()[0]
+                with open(filename, "r") as file:
+                    self.text_starting_state.setText(file.read())
+
+        def save_starting_state():
+            dialog = QtWidgets.QFileDialog()
+            dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
+            dialog.setNameFilter("Turing Machine State files (*.tms)")
+            if dialog.exec():
+                filename = dialog.selectedFiles()[0]
+                with open(filename, "w") as file:
+                    file.write(self.text_starting_state.toPlainText())
+
         groupbox_program = QtWidgets.QGroupBox("Program")
         vbox_program = QtWidgets.QVBoxLayout()
         self.text_program = QtWidgets.QTextEdit()
         hbox_program = QtWidgets.QHBoxLayout()
         button_program_load = QtWidgets.QPushButton("Load")
-        button_program_load.clicked.connect(self.load_program)
+        button_program_load.clicked.connect(load_program)
         button_program_save = QtWidgets.QPushButton("Save")
-        button_program_save.clicked.connect(self.save_program)
+        button_program_save.clicked.connect(save_program)
         hbox_program.addWidget(button_program_load)
         hbox_program.addWidget(button_program_save)
         vbox_program.addWidget(self.text_program)
@@ -102,9 +143,9 @@ class MyWidget(QtWidgets.QWidget):
         vbox_starting_state.addWidget(self.text_starting_state)
         hbox_starting_state = QtWidgets.QHBoxLayout()
         button_starting_state_load = QtWidgets.QPushButton("Load")
-        button_starting_state_load.clicked.connect(self.load_starting_state)
+        button_starting_state_load.clicked.connect(load_starting_state)
         button_starting_state_save = QtWidgets.QPushButton("Save")
-        button_starting_state_save.clicked.connect(self.save_starting_state)
+        button_starting_state_save.clicked.connect(save_starting_state)
         hbox_starting_state.addWidget(button_starting_state_load)
         hbox_starting_state.addWidget(button_starting_state_save)
         vbox_starting_state.addLayout(hbox_starting_state)
@@ -112,11 +153,68 @@ class MyWidget(QtWidgets.QWidget):
         fields.addWidget(groupbox_program)
         fields.addWidget(groupbox_starting_state)
 
+    def options_page_ui(self):
+        layout = QtWidgets.QVBoxLayout(self.options_page)
+        hbox_transition_speed = QtWidgets.QHBoxLayout()
+        label_transition_speed = QtWidgets.QLabel("Transition speed:")
+        checkbox_transition_speed = QtWidgets.QCheckBox("Use seconds per transition")
+        slider_transition_speed = QtWidgets.QSlider()
+        slider_transition_speed.setRange(1, 200)
+        slider_transition_speed.setValue((self.time_per_transition * 100).__int__())
+
+        slider_transition_speed.setOrientation(QtCore.Qt.Horizontal)
+        text_transition_speed = QtWidgets.QTextEdit(self.time_per_transition.__str__())
+        text_transition_speed.setMaximumHeight(30)
+        text_transition_speed.setMaximumWidth(100)
+
+        def speed_transition():
+            if checkbox_transition_speed.isChecked():
+                checkbox_transition_speed.setText("Use transitions per second")
+                text_transition_speed.setText((1 / self.time_per_transition).__str__()[:10])
+                slider_transition_speed.setValue((1 / self.time_per_transition).__int__())
+            else:
+                checkbox_transition_speed.setText("Use seconds per transition")
+                text_transition_speed.setText(self.time_per_transition.__str__()[:10])
+                slider_transition_speed.setValue((self.time_per_transition * 100).__int__())
+
+        def changed_slider(value):
+            if checkbox_transition_speed.isChecked():
+                self.time_per_transition = 1 / value
+                text_transition_speed.setText((1 / self.time_per_transition).__str__()[:10])
+            else:
+                self.time_per_transition = value / 100
+                text_transition_speed.setText(self.time_per_transition.__str__()[:10])
+
+        def changed_text(text):
+            try:
+                float(text)
+            except:
+                return
+            slider_transition_speed.valueChanged.disconnect()
+            if checkbox_transition_speed.isChecked():
+                self.time_per_transition = 1 / float(text)
+                slider_transition_speed.setValue((1 / self.time_per_transition).__int__())
+            else:
+                self.time_per_transition = float(text)
+                slider_transition_speed.setValue((self.time_per_transition * 100).__int__())
+            slider_transition_speed.valueChanged.connect(lambda: changed_slider(slider_transition_speed.value()))
+
+        checkbox_transition_speed.stateChanged.connect(speed_transition)
+        slider_transition_speed.valueChanged.connect(lambda: changed_slider(slider_transition_speed.value()))
+        text_transition_speed.textChanged.connect(lambda: changed_text(text_transition_speed.toPlainText()))
+
+        layout.addLayout(hbox_transition_speed)
+        hbox_transition_speed.addWidget(label_transition_speed)
+        hbox_transition_speed.addWidget(checkbox_transition_speed)
+        hbox_transition_speed.addWidget(slider_transition_speed)
+        hbox_transition_speed.addWidget(text_transition_speed)
+
     def set_glow_on_hbox(self, hbox: QtWidgets.QHBoxLayout, index: int):
         previous_cell = typing.cast(QtWidgets.QPushButton, hbox.itemAt(self.current_tick).widget())
         effect = QtWidgets.QGraphicsDropShadowEffect(previous_cell)
+        effect.setColor(QtGui.QColor(0, 0, 0, 0))
         previous_cell.setGraphicsEffect(effect)
-        previous_cell.setAutoFillBackground(False)
+        previous_cell.setPalette(QtGui.QPalette())
         cell = typing.cast(QtWidgets.QPushButton, hbox.itemAt(index).widget())
         effect = QtWidgets.QGraphicsDropShadowEffect(cell)
         effect.setColor(QtGui.QColor(128, 128, 255))
@@ -127,43 +225,6 @@ class MyWidget(QtWidgets.QWidget):
         palette = QtGui.QPalette()
         palette.setColor(cell.backgroundRole(), QtGui.QColor(64, 64, 255))
         cell.setPalette(palette)
-        cell.setAutoFillBackground(True)
-        
-    def load_program(self):
-        dialog = QtWidgets.QFileDialog()
-        dialog.setFileMode(QtWidgets.QFileDialog.ExistingFile)
-        dialog.setNameFilter("Turing Machine Transitions files (*.tmt)")
-        if dialog.exec():
-            filename = dialog.selectedFiles()[0]
-            with open(filename, "r") as file:
-                self.text_program.setText(file.read())
-    
-    def save_program(self):
-        dialog = QtWidgets.QFileDialog()
-        dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
-        dialog.setNameFilter("Turing Machine Transitions files (*.tmt)")
-        if dialog.exec():
-            filename = dialog.selectedFiles()[0]
-            with open(filename, "w") as file:
-                file.write(self.text_program.toPlainText())
-    
-    def load_starting_state(self):
-        dialog = QtWidgets.QFileDialog()
-        dialog.setFileMode(QtWidgets.QFileDialog.ExistingFile)
-        dialog.setNameFilter("Turing Machine State files (*.tms)")
-        if dialog.exec():
-            filename = dialog.selectedFiles()[0]
-            with open(filename, "r") as file:
-                self.text_starting_state.setText(file.read())
-    
-    def save_starting_state(self):
-        dialog = QtWidgets.QFileDialog()
-        dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
-        dialog.setNameFilter("Turing Machine State files (*.tms)")
-        if dialog.exec():
-            filename = dialog.selectedFiles()[0]
-            with open(filename, "w") as file:
-                file.write(self.text_starting_state.toPlainText())
 
 
 if __name__ == "__main__":

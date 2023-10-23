@@ -1,4 +1,5 @@
 ﻿import sys
+sys.path.append("..")
 import time
 import typing
 import asyncio

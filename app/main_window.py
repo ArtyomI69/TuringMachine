@@ -124,6 +124,8 @@ class MyWidget(QtWidgets.QWidget):
             dialog.setNameFilter("Turing Machine Transitions files (*.tmt)")
             if dialog.exec():
                 filename = dialog.selectedFiles()[0]
+                if not filename.endswith(".tmt"):
+                    filename += ".tmt"
                 with open(filename, "w") as file:
                     file.write(self.text_program.toPlainText())
 
@@ -142,6 +144,8 @@ class MyWidget(QtWidgets.QWidget):
             dialog.setNameFilter("Turing Machine State files (*.tms)")
             if dialog.exec():
                 filename = dialog.selectedFiles()[0]
+                if not filename.endswith(".tms"):
+                    filename += ".tms"
                 with open(filename, "w") as file:
                     file.write(self.text_starting_state.toPlainText())
 
@@ -151,9 +155,14 @@ class MyWidget(QtWidgets.QWidget):
             dialog.setNameFilter("Turing Machine State files (*.tms)")
             if dialog.exec():
                 filename = dialog.selectedFiles()[0]
+                if not filename.endswith(".tms"):
+                    filename += ".tms"
                 with open(filename, "w") as file:
                     file.write(self.text_current_state.toPlainText())
-
+        
+        def push_to_starting_state():
+            self.text_starting_state.setText(self.text_current_state.toPlainText())
+        
         groupbox_program = QtWidgets.QGroupBox("Program")
         vbox_program = QtWidgets.QVBoxLayout()
         self.text_program = QtWidgets.QTextEdit()
@@ -184,9 +193,14 @@ class MyWidget(QtWidgets.QWidget):
         vbox_current_state = QtWidgets.QVBoxLayout()
         self.text_current_state = QtWidgets.QTextEdit()
         vbox_current_state.addWidget(self.text_current_state)
+        hbox_current_state = QtWidgets.QHBoxLayout()
+        button_current_state_push = QtWidgets.QPushButton("Push to starting state")
+        button_current_state_push.clicked.connect(push_to_starting_state)
         button_current_state_save = QtWidgets.QPushButton("Save")
         button_current_state_save.clicked.connect(save_current_state)
-        vbox_current_state.addWidget(button_current_state_save)
+        hbox_current_state.addWidget(button_current_state_push)
+        hbox_current_state.addWidget(button_current_state_save)
+        vbox_current_state.addLayout(hbox_current_state)
         groupbox_current_state.setLayout(vbox_current_state)
         fields.addWidget(groupbox_program)
         fields.addWidget(groupbox_starting_state)

@@ -277,7 +277,7 @@ class MyWidget(QtWidgets.QWidget):
     def initialise_machine(self):
         self.running = False
         self.turing_machine = TuringMachine(self.text_starting_state.toPlainText(), self.text_program.toPlainText())
-        self.text_current_state.setText(self.turing_machine.current_state)
+        self.text_current_state.setText(self.convert_to_state(self.turing_machine))
         self.drop_glow_on_hbox(self.timeline_cells, self.current_tick)
         self.current_tick = 0
         self.current_cell = self.turing_machine.current_index
@@ -288,6 +288,33 @@ class MyWidget(QtWidgets.QWidget):
     update_machine = QtCore.Signal(TuringMachine)
     update_running = QtCore.Signal(bool)
     update_speed = QtCore.Signal(float)
+
+    def convert_to_state(self, machine: TuringMachine):
+        str_state = f"@current_state: {machine.current_state}\n"
+        str_state += f"@current_index: {machine.current_index}\n"
+        alphabet_str = " ".join(i for i in machine.alphabet)
+        str_state += f"@alphabet: {alphabet_str}\n"
+        str_state += f"@default_cell_state: {machine.default_cell_state}\n"
+        regions = []
+        full_tape = machine.tape_negative[:-1] + machine.tape_positive
+        current_region = []
+        current_region_start = None
+        for i in range(len(full_tape)):
+            if full_tape[i] != machine.default_cell_state:
+                if current_region_start is None:
+                    current_region_start = i - len(machine.tape_negative)
+                current_region.append(full_tape[i])
+            else:
+                if current_region_start is not None:
+                    regions.append([current_region_start, current_region])
+                    current_region_start = None
+                current_region = []
+        if current_region_start is not None:
+            regions.append([current_region_start, current_region])
+        for region in regions:
+            region_str = " ".join(region[1])
+            str_state += f"{region[0]}: {region_str}\n"
+        return str_state
 
     class turing_worker(QtCore.QThread):
 
@@ -320,8 +347,7 @@ class MyWidget(QtWidgets.QWidget):
         self.drop_glow_on_hbox(self.timeline_cells, self.current_tick)
         self.current_tick = self.turing_machine.step_count
         self.set_glow_on_hbox(self.timeline_cells, self.current_tick)
-        self.text_current_state.setText(self.turing_machine.current_state)
-        self.text_current_state.setText(self.turing_machine.current_state)
+        self.text_current_state.setText(self.convert_to_state(self.turing_machine))
 
     def run_to_end(self):
         if self.turing_machine is None:
@@ -334,7 +360,7 @@ class MyWidget(QtWidgets.QWidget):
         self.current_tick += self.turing_machine.step_count
         self.current_cell = self.turing_machine.current_index
         self.set_glow_on_hbox(self.timeline_cells, self.current_tick)
-        self.text_current_state.setText(self.turing_machine.current_state)
+        self.text_current_state.setText(self.convert_to_state(self.turing_machine))
 
     def resume_pause(self):
         if self.turing_machine is None:

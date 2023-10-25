@@ -1,9 +1,9 @@
 ﻿import sys
+
 sys.path.append("./")
 import time
 import typing
 import asyncio
-import _thread
 
 from PySide6 import QtCore, QtWidgets, QtGui
 from turing_interpreter.TuringMachine import *
@@ -129,10 +129,12 @@ class MyWidget(QtWidgets.QWidget):
                 with open(filename, "w") as file:
                     file.write(self.text_program.toPlainText())
 
+        state_string_filter = "Turing Machine State files (*.tms)"
+
         def load_starting_state():
             dialog = QtWidgets.QFileDialog()
             dialog.setFileMode(QtWidgets.QFileDialog.ExistingFile)
-            dialog.setNameFilter("Turing Machine State files (*.tms)")
+            dialog.setNameFilter(state_string_filter)
             if dialog.exec():
                 filename = dialog.selectedFiles()[0]
                 with open(filename, "r") as file:
@@ -141,7 +143,7 @@ class MyWidget(QtWidgets.QWidget):
         def save_starting_state():
             dialog = QtWidgets.QFileDialog()
             dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
-            dialog.setNameFilter("Turing Machine State files (*.tms)")
+            dialog.setNameFilter(state_string_filter)
             if dialog.exec():
                 filename = dialog.selectedFiles()[0]
                 if not filename.endswith(".tms"):
@@ -152,17 +154,17 @@ class MyWidget(QtWidgets.QWidget):
         def save_current_state():
             dialog = QtWidgets.QFileDialog()
             dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
-            dialog.setNameFilter("Turing Machine State files (*.tms)")
+            dialog.setNameFilter(state_string_filter)
             if dialog.exec():
                 filename = dialog.selectedFiles()[0]
                 if not filename.endswith(".tms"):
                     filename += ".tms"
                 with open(filename, "w") as file:
                     file.write(self.text_current_state.toPlainText())
-        
+
         def push_to_starting_state():
             self.text_starting_state.setText(self.text_current_state.toPlainText())
-        
+
         groupbox_program = QtWidgets.QGroupBox("Program")
         vbox_program = QtWidgets.QVBoxLayout()
         self.text_program = QtWidgets.QTextEdit()
@@ -242,7 +244,7 @@ class MyWidget(QtWidgets.QWidget):
         def changed_text(text):
             try:
                 float(text)
-            except:
+            except Exception:
                 return
             slider_transition_speed.valueChanged.disconnect()
             if checkbox_transition_speed.isChecked():

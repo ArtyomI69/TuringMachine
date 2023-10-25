@@ -2,15 +2,16 @@ import unittest
 from turing_interpreter.Parser import *
 from turing_interpreter.MyException import *
 
+
 class TestTuringMachine(unittest.TestCase):
     def test_parse_state_string(self):
         # Test for valid input
-        str_state = "@current_state: state_seek\n" \
-                    "@current_index: 0\n" \
-                    "@alphabet: _ 0 1\n" \
-                    "@default_cell_state: _\n" \
-                    "#------------------------\n"\
-                    "0: _ 1 0 1 0 0 1 1 0 _ 1"
+        str_state = '@current_state: state_seek\n' \
+                    '@current_index: 0\n' \
+                    '@alphabet: _ 0 1\n' \
+                    '@default_cell_state: _\n' \
+                    '#------------------------\n' \
+                    '0: _ 1 0 1 0 0 1 1 0 _ 1'
         assert (parse_state_string(str_state) ==
                 ('state_seek', 0, {'0', '1', '_'}, '_', ['_', '1', '0', '1', '0', '0', '1', '1', '0', '_', '1']))
 
@@ -27,12 +28,12 @@ class TestTuringMachine(unittest.TestCase):
         # Test for invalid alphabet
         str_state = "@current_state: state_seek\n" \
                     "@current_index: 0\n" \
-                    "@alphabet: _ 0 1 2 3\n" \
+                    "@alphabet: _ 0 1\n" \
                     "@default_cell_state: _\n" \
                     "#------------------------\n" \
                     "0: _ 1 0 1 0 0 1 1 0 _ 1"
         assert (parse_state_string(str_state) !=
-                ('state_seek', 0, {'0', '1', '_'}, '_', ['_', '1', '0', '1', '0', '0', '1', '1', '0', '_', '1']))
+                ('state_seek', 0, {'0', '1', '_'}, '_', ['_', '1', '0', '1', '3', '4', '1', '1', '0', '_', '2']))
 
         # Test for invalid tape index
         str_state = "@current_state: state_seek\n" \
@@ -103,9 +104,12 @@ class TestTuringMachine(unittest.TestCase):
                       "state_invert 1 -> state_invert 0 R\n" \
                       "state_invert _ -> state_stop _ N"
         assert parse_program_string(str_program, {'_', '0', '1'}) == (100,
-        {'state_seek _': ['state_seek', '_', 1], 'state_seek 0': ['state_invert', '0', 0],
-         'state_seek 1': ['state_invert', '1', 0], 'state_invert 0': ['state_invert', '1', 1],
-         'state_invert 1': ['state_invert', '0', 1], 'state_invert _': ['state_stop', '_', 0]})
+                                                                      {'state_seek _': ['state_seek', '_', 1],
+                                                                       'state_seek 0': ['state_invert', '0', 0],
+                                                                       'state_seek 1': ['state_invert', '1', 0],
+                                                                       'state_invert 0': ['state_invert', '1', 1],
+                                                                       'state_invert 1': ['state_invert', '0', 1],
+                                                                       'state_invert _': ['state_stop', '_', 0]})
 
         # Test for invalid input
         str_program = "@max_transitions: 100\n" \

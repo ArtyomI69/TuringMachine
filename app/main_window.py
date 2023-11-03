@@ -60,40 +60,63 @@ class MyWidget(QtWidgets.QWidget):
         timeline_buttons.addWidget(timeline_button_go_to_end)
         timeline_overall.addLayout(timeline_buttons)
         timeline_overall.addLayout(timeline_buttons)
-        timeline_scroll_area = QtWidgets.QScrollArea()
-        timeline_scroll_area.setVerticalScrollBarPolicy(
-            QtWidgets.QScrollArea.verticalScrollBarPolicy(timeline_scroll_area).ScrollBarAlwaysOff)
+        self.timeline_scroll_area = QtWidgets.QScrollArea()
+        self.timeline_scroll_area.setVerticalScrollBarPolicy(
+            QtWidgets.QScrollArea.verticalScrollBarPolicy(self.timeline_scroll_area).ScrollBarAlwaysOff)
         timeline_scroll_stub = QtWidgets.QWidget()
         timeline_cells_vbox = QtWidgets.QVBoxLayout()
         self.timeline_cells = QtWidgets.QHBoxLayout()
         QtWidgets.QGraphicsLinearLayout()
         for i in range(1000):
-            self.timeline_cells.addWidget(QtWidgets.QPushButton(f"Tick {i}"))
+            timeline_buttons_button = QtWidgets.QPushButton(f"Tick {i}")
+            timeline_buttons_button.clicked.connect(lambda param=i: self.timeline_cell_click(param))
+            self.timeline_cells.addWidget(timeline_buttons_button)
         timeline_cells_vbox.addLayout(self.timeline_cells)
         timeline_scroll_stub.setLayout(timeline_cells_vbox)
-        timeline_scroll_area.setWidget(timeline_scroll_stub)
-        timeline_overall.addWidget(timeline_scroll_area)
+        self.timeline_scroll_area.setWidget(timeline_scroll_stub)
+        timeline_overall.addWidget(self.timeline_scroll_area)
         self.button_load_machine = QtWidgets.QPushButton("Initialise machine")
         self.button_load_machine.clicked.connect(self.initialise_machine)
         timeline_overall.addWidget(self.button_load_machine)
         groupbox_timeline.setLayout(timeline_overall)
         self.main_layout.addWidget(groupbox_timeline)
 
+    def timeline_cell_click(self):
+        pass
+
+    def state_cell_click(self):
+        if self.turing_machine is None or self.running or self.turing_machine.step_count != 0:
+            return
+        else:
+            alphabet = self.turing_machine.alphabet
+            button: QtWidgets.QPushButton = self.sender()
+            cell_num = int(button.text().split("\n")[1])
+            item, ok = QtWidgets.QInputDialog.getItem(self, "Select item", f"Select item for cell {cell_num}", alphabet, 0, False)
+            if ok:
+                if cell_num >= 0:
+                    self.turing_machine.tape_positive[cell_num] = item
+                else:
+                    self.turing_machine.tape_negative[-cell_num] = item
+                button.setText(f"{item}\n{cell_num}")
+
     def tabular_page_ui(self):
         layout = QtWidgets.QVBoxLayout(self.tabular_page)
         groupbox_state = QtWidgets.QGroupBox("State")
         groupbox_state.setMaximumHeight(105)
-        scroll_area_state = QtWidgets.QScrollArea()
-        scroll_area_state.setVerticalScrollBarPolicy(
-            QtWidgets.QScrollArea.verticalScrollBarPolicy(scroll_area_state).ScrollBarAlwaysOff)
+        self.scroll_area_state = QtWidgets.QScrollArea()
+        self.scroll_area_state.setVerticalScrollBarPolicy(
+            QtWidgets.QScrollArea.verticalScrollBarPolicy(self.scroll_area_state).ScrollBarAlwaysOff)
         scroll_stub_state = QtWidgets.QWidget()
         self.tape_cells = QtWidgets.QHBoxLayout()
         for i in range(1000):
-            self.tape_cells.addWidget(QtWidgets.QPushButton(f"Cell {i}"))
+            state_cell_button = QtWidgets.QPushButton(f"Cell {i}")
+            state_cell_button.clicked.connect(self.state_cell_click)
+            state_cell_button.setFixedHeight(35)
+            self.tape_cells.addWidget(state_cell_button)
         scroll_stub_state.setLayout(self.tape_cells)
-        scroll_area_state.setWidget(scroll_stub_state)
+        self.scroll_area_state.setWidget(scroll_stub_state)
         vbox_scroll_state = QtWidgets.QVBoxLayout()
-        vbox_scroll_state.addWidget(scroll_area_state)
+        vbox_scroll_state.addWidget(self.scroll_area_state)
         groupbox_state.setLayout(vbox_scroll_state)
         layout.addWidget(groupbox_state)
         groupbox_transition = QtWidgets.QGroupBox("Transitions")
@@ -117,6 +140,8 @@ class MyWidget(QtWidgets.QWidget):
                 filename = dialog.selectedFiles()[0]
                 with open(filename, "r") as file:
                     self.text_program.setText(file.read())
+                if self.text_starting_state.toPlainText() != "":
+                    self.initialise_machine()
 
         def save_program():
             dialog = QtWidgets.QFileDialog()
@@ -139,6 +164,8 @@ class MyWidget(QtWidgets.QWidget):
                 filename = dialog.selectedFiles()[0]
                 with open(filename, "r") as file:
                     self.text_starting_state.setText(file.read())
+                if self.text_program.toPlainText() != "":
+                    self.initialise_machine()
 
         def save_starting_state():
             dialog = QtWidgets.QFileDialog()
@@ -194,6 +221,7 @@ class MyWidget(QtWidgets.QWidget):
         groupbox_current_state = QtWidgets.QGroupBox("Current state")
         vbox_current_state = QtWidgets.QVBoxLayout()
         self.text_current_state = QtWidgets.QTextEdit()
+        self.text_current_state.setEnabled(False)
         vbox_current_state.addWidget(self.text_current_state)
         hbox_current_state = QtWidgets.QHBoxLayout()
         button_current_state_push = QtWidgets.QPushButton("Push to starting state")
@@ -292,12 +320,37 @@ class MyWidget(QtWidgets.QWidget):
 
     def initialise_machine(self):
         self.running = False
-        self.turing_machine = TuringMachine(self.text_starting_state.toPlainText(), self.text_program.toPlainText())
+        try:
+            self.turing_machine = TuringMachine(self.text_starting_state.toPlainText(), self.text_program.toPlainText())
+        except MyException as e:
+            QtWidgets.QErrorMessage(self).showMessage(e.message)
+            self.color_machine_state(QtGui.QColor(255, 64, 64))
+            return
         self.text_current_state.setText(self.convert_to_state(self.turing_machine))
         self.drop_glow_on_hbox(self.timeline_cells, self.current_tick)
+        self.drop_glow_on_hbox(self.tape_cells, self.current_cell)
         self.current_tick = 0
-        self.current_cell = self.turing_machine.current_index
+        self.current_cell = 500
         self.set_glow_on_hbox(self.timeline_cells, self.current_tick)
+        self.set_glow_on_hbox(self.tape_cells, self.current_cell)
+        for i in range(1000):
+            button: QtWidgets.QPushButton = self.tape_cells.itemAt(i).widget()
+            cell_id = self.turing_machine.current_index + (i - 500)
+            if (cell_id < 0 and -cell_id >= len(self.turing_machine.tape_negative)) or cell_id >= len(
+                    self.turing_machine.tape_positive):
+                button.setText(f"{self.turing_machine.default_cell_state}\n{cell_id}")
+            else:
+                if cell_id < 0:
+                    button.setText(f"{self.turing_machine.tape_negative[-cell_id - 1]}\n{cell_id}")
+                else:
+                    button.setText(f"{self.turing_machine.tape_positive[cell_id]}\n{cell_id}")
+        for i in range(1000):
+            button: QtWidgets.QPushButton = self.timeline_cells.itemAt(i).widget()
+            button.setText(f"Tick {i}")
+
+        self.timeline_scroll_area.ensureVisible(0, 0)
+        self.scroll_area_state.ensureWidgetVisible(self.tape_cells.itemAt(500).widget(), 50000, 50000)
+
         self.color_machine_state(QtGui.QColor(64, 255, 64))
         self.update_machine.emit(self.turing_machine)
 

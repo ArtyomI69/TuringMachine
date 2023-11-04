@@ -69,7 +69,7 @@ class MyWidget(QtWidgets.QWidget):
         QtWidgets.QGraphicsLinearLayout()
         for i in range(1000):
             timeline_buttons_button = QtWidgets.QPushButton(f"Tick {i}")
-            timeline_buttons_button.clicked.connect(lambda param=i: self.timeline_cell_click(param))
+            timeline_buttons_button.clicked.connect(lambda: self.timeline_cell_click)
             self.timeline_cells.addWidget(timeline_buttons_button)
         timeline_cells_vbox.addLayout(self.timeline_cells)
         timeline_scroll_stub.setLayout(timeline_cells_vbox)
@@ -94,10 +94,17 @@ class MyWidget(QtWidgets.QWidget):
             item, ok = QtWidgets.QInputDialog.getItem(self, "Select item", f"Select item for cell {cell_num}", alphabet, 0, False)
             if ok:
                 if cell_num >= 0:
+                    if cell_num >= len(self.turing_machine.tape_positive):
+                        for _ in range(cell_num - len(self.turing_machine.tape_positive) + 10):
+                            self.turing_machine.tape_positive.append(self.turing_machine.default_cell_state)
                     self.turing_machine.tape_positive[cell_num] = item
                 else:
-                    self.turing_machine.tape_negative[-cell_num] = item
+                    if (-cell_num) >= len(self.turing_machine.tape_negative):
+                        for _ in range((-cell_num) - len(self.turing_machine.tape_negative) + 10):
+                            self.turing_machine.tape_negative.append(self.turing_machine.default_cell_state)
+                    self.turing_machine.tape_negative[(-cell_num) - 1] = item
                 button.setText(f"{item}\n{cell_num}")
+                self.text_starting_state.setText(self.convert_to_state(self.turing_machine))
 
     def tabular_page_ui(self):
         layout = QtWidgets.QVBoxLayout(self.tabular_page)
@@ -365,7 +372,7 @@ class MyWidget(QtWidgets.QWidget):
         str_state += f"@alphabet: {alphabet_str}\n"
         str_state += f"@default_cell_state: {machine.default_cell_state}\n"
         regions = []
-        full_tape = machine.tape_negative[:-1] + machine.tape_positive
+        full_tape = [machine.tape_negative[i] for i in range(len(machine.tape_negative) - 1, -1, -1)] + machine.tape_positive
         current_region = []
         current_region_start = None
         for i in range(len(full_tape)):

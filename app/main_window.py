@@ -69,7 +69,7 @@ class MyWidget(QtWidgets.QWidget):
         QtWidgets.QGraphicsLinearLayout()
         for i in range(1000):
             timeline_buttons_button = QtWidgets.QPushButton(f"Tick {i}")
-            timeline_buttons_button.clicked.connect(lambda: self.timeline_cell_click)
+            timeline_buttons_button.clicked.connect(self.timeline_cell_click)
             self.timeline_cells.addWidget(timeline_buttons_button)
         timeline_cells_vbox.addLayout(self.timeline_cells)
         timeline_scroll_stub.setLayout(timeline_cells_vbox)
@@ -82,7 +82,20 @@ class MyWidget(QtWidgets.QWidget):
         self.main_layout.addWidget(groupbox_timeline)
 
     def timeline_cell_click(self):
-        pass
+        if self.turing_machine is None:
+            return
+        else:
+            button: QtWidgets.QPushButton = self.sender()
+            cell_num = int(button.text().split(" ")[1])
+            if cell_num > self.turing_machine.step_count:
+                while cell_num != self.turing_machine.step_count:
+                    if not self.turing_machine.step_forward():
+                        break
+            elif cell_num < self.turing_machine.step_count:
+                while cell_num != self.turing_machine.step_count:
+                    if not self.turing_machine.step_backward():
+                        break
+            self.update_from_machine(self.turing_machine)
 
     def state_cell_click(self):
         if self.turing_machine is None or self.running or self.turing_machine.step_count != 0:
@@ -327,6 +340,7 @@ class MyWidget(QtWidgets.QWidget):
 
     def initialise_machine(self):
         self.running = False
+        self.update_running.emit(False)
         try:
             self.turing_machine = TuringMachine(self.text_starting_state.toPlainText(), self.text_program.toPlainText())
         except MyException as e:
@@ -421,22 +435,42 @@ class MyWidget(QtWidgets.QWidget):
     def update_from_machine(self, machine):
         self.turing_machine: TuringMachine = machine
         self.drop_glow_on_hbox(self.timeline_cells, self.current_tick)
-        self.current_tick = self.turing_machine.step_count
+        self.drop_glow_on_hbox(self.tape_cells, self.current_cell)
+        self.current_tick = min(self.turing_machine.step_count, 500)
+        self.current_cell = 500
         self.set_glow_on_hbox(self.timeline_cells, self.current_tick)
+        self.set_glow_on_hbox(self.tape_cells, self.current_cell)
         self.text_current_state.setText(self.convert_to_state(self.turing_machine))
+        self.timeline_scroll_area.ensureWidgetVisible(self.timeline_cells.itemAt(self.current_tick).widget(), 50000, 50000)
+        self.scroll_area_state.ensureWidgetVisible(self.tape_cells.itemAt(self.current_cell).widget(), 50000, 50000)
+        for i in range(1000):
+            button: QtWidgets.QPushButton = self.timeline_cells.itemAt(i).widget()
+            button.setText(f"Tick {i if self.current_tick < 500 else (i - 500) + machine.step_count}")
+        for i in range(1000):
+            button: QtWidgets.QPushButton = self.tape_cells.itemAt(i).widget()
+            cell_num = (i - 500) + machine.current_index
+            cell_state = None
+            if cell_num < 0:
+                if -cell_num >= len(machine.tape_negative):
+                    for _ in range(-cell_num - len(machine.tape_negative) + 10):
+                        machine.tape_negative.append(machine.default_cell_state)
+                cell_state = machine.tape_negative[-cell_num - 1]
+            else:
+                if cell_num >= len(machine.tape_positive):
+                    for _ in range(cell_num - len(machine.tape_positive) + 10):
+                        machine.tape_positive.append(machine.default_cell_state)
+                cell_state = machine.tape_positive[cell_num]
+            button.setText(f"{cell_state}\n{cell_num}")
 
     def run_to_end(self):
         if self.turing_machine is None:
             return
         if self.running:
             self.running = False
+            self.update_running.emit(False)
         time.sleep(0.01)
         self.turing_machine.run_forward()
-        self.drop_glow_on_hbox(self.timeline_cells, self.current_tick)
-        self.current_tick += self.turing_machine.step_count
-        self.current_cell = self.turing_machine.current_index
-        self.set_glow_on_hbox(self.timeline_cells, self.current_tick)
-        self.text_current_state.setText(self.convert_to_state(self.turing_machine))
+        self.update_from_machine(self.turing_machine)
 
     def resume_pause(self):
         if self.turing_machine is None:

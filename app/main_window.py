@@ -18,8 +18,10 @@ class MyWidget(QtWidgets.QWidget):
 
         self.current_tick = 0
         self.current_cell = 0
+        self.current_table = (0, 0)
         self.time_per_transition = 0.75
         self.turing_machine: None | TuringMachine = None
+        self.last_cell: None | (int, int) = None
         self.running = False
         self.worker = self.turing_worker()
         self.worker.update_progress.connect(self.update_from_machine)
@@ -87,6 +89,8 @@ class MyWidget(QtWidgets.QWidget):
         else:
             button: QtWidgets.QPushButton = self.sender()
             cell_num = int(button.text().split(" ")[1])
+            self.update_running.emit(False)
+            self.running = False
             if cell_num > self.turing_machine.step_count:
                 while cell_num != self.turing_machine.step_count:
                     if not self.turing_machine.step_forward():
@@ -95,6 +99,8 @@ class MyWidget(QtWidgets.QWidget):
                 while cell_num != self.turing_machine.step_count:
                     if not self.turing_machine.step_backward():
                         break
+            self.update_machine.emit(self.turing_machine)
+            self.color_machine_state(QtGui.QColor(255, 255, 0))
             self.update_from_machine(self.turing_machine)
 
     def state_cell_click(self):
@@ -104,7 +110,8 @@ class MyWidget(QtWidgets.QWidget):
             alphabet = self.turing_machine.alphabet
             button: QtWidgets.QPushButton = self.sender()
             cell_num = int(button.text().split("\n")[1])
-            item, ok = QtWidgets.QInputDialog.getItem(self, "Select item", f"Select item for cell {cell_num}", alphabet, 0, False)
+            item, ok = QtWidgets.QInputDialog.getItem(self, "Select item", f"Select item for cell {cell_num}", alphabet,
+                                                      0, False)
             if ok:
                 if cell_num >= 0:
                     if cell_num >= len(self.turing_machine.tape_positive):
@@ -118,6 +125,35 @@ class MyWidget(QtWidgets.QWidget):
                     self.turing_machine.tape_negative[(-cell_num) - 1] = item
                 button.setText(f"{item}\n{cell_num}")
                 self.text_starting_state.setText(self.convert_to_state(self.turing_machine))
+                self.update_machine.emit(self.turing_machine)
+
+    def table_cell_click(self, row, column):
+        if self.turing_machine is None or self.running or self.turing_machine.step_count != 0:
+            return
+        else:
+            if self.last_cell is None:
+                self.last_cell = (row, column)
+                new_view = QtWidgets.QTableWidgetItem(self.table_transition.item(row, column).text())
+                new_view.setBackground(QtGui.QColor(255, 255, 255, 30))
+                self.table_transition.setItem(row, column, new_view)
+            else:
+                new_view = QtWidgets.QTableWidgetItem()
+                item, ok = QtWidgets.QInputDialog.getItem(self, "Select direction", f"Direction to move after operation",
+                                                          ["Left", "None", "Right"],
+                                                          1, False)
+                if ok:
+                    new_view.setText(f"{self.table_transition.horizontalHeaderItem(column).text()} {self.table_transition.verticalHeaderItem(row).text()} {item}")
+                    self.table_transition.setItem(self.last_cell[0], self.last_cell[1], new_view)
+                    if item == "None":
+                        direction = 0
+                    elif item == "Left":
+                        direction = -1
+                    else:
+                        direction = 1
+                    self.turing_machine.program[f"{self.table_transition.horizontalHeaderItem(self.last_cell[1]).text()} {self.table_transition.verticalHeaderItem(self.last_cell[0]).text()}"] = [self.table_transition.horizontalHeaderItem(column).text(), self.table_transition.verticalHeaderItem(row).text(), direction]
+                    self.last_cell = None
+                    self.text_program.setText(self.convert_to_program(self.turing_machine))
+                    self.update_machine.emit(self.turing_machine)
 
     def tabular_page_ui(self):
         layout = QtWidgets.QVBoxLayout(self.tabular_page)
@@ -141,9 +177,9 @@ class MyWidget(QtWidgets.QWidget):
         layout.addWidget(groupbox_state)
         groupbox_transition = QtWidgets.QGroupBox("Transitions")
         self.table_transition = QtWidgets.QTableWidget()
-        self.table_transition.setColumnCount(8)
-        self.table_transition.setRowCount(1000)
-        self.table_transition.setHorizontalHeaderLabels(["From", "To"])
+        self.table_transition.setColumnCount(5)
+        self.table_transition.setRowCount(5)
+        self.table_transition.cellClicked.connect(self.table_cell_click)
         vbox_table_transition = QtWidgets.QVBoxLayout()
         vbox_table_transition.addWidget(self.table_transition)
         groupbox_transition.setLayout(vbox_table_transition)
@@ -241,7 +277,6 @@ class MyWidget(QtWidgets.QWidget):
         groupbox_current_state = QtWidgets.QGroupBox("Current state")
         vbox_current_state = QtWidgets.QVBoxLayout()
         self.text_current_state = QtWidgets.QTextEdit()
-        self.text_current_state.setEnabled(False)
         vbox_current_state.addWidget(self.text_current_state)
         hbox_current_state = QtWidgets.QHBoxLayout()
         button_current_state_push = QtWidgets.QPushButton("Push to starting state")
@@ -372,12 +407,43 @@ class MyWidget(QtWidgets.QWidget):
         self.timeline_scroll_area.ensureVisible(0, 0)
         self.scroll_area_state.ensureWidgetVisible(self.tape_cells.itemAt(500).widget(), 50000, 50000)
 
+        self.table_transition.setRowCount(len(self.turing_machine.alphabet))
+        self.table_transition.setColumnCount(len(self.turing_machine.states))
+        self.table_transition.setHorizontalHeaderLabels(self.turing_machine.states)
+        self.table_transition.setVerticalHeaderLabels(self.turing_machine.alphabet)
+        for i in range(len(self.turing_machine.alphabet)):
+            for j in range(len(self.turing_machine.states)):
+                try:
+                    next_state = self.turing_machine.program[
+                        f"{self.turing_machine.states[j]} {self.turing_machine.alphabet[i]}"]
+                    if next_state[2] == -1:
+                        cur_shift = "Left"
+                    elif next_state[2] == 1:
+                        cur_shift = "Right"
+                    else:
+                        cur_shift = "None"
+                    self.table_transition.setItem(i, j,
+                                                  QtWidgets.QTableWidgetItem(
+                                                      f"{next_state[0]} {next_state[1]} {cur_shift}"))
+                except KeyError:
+                    self.table_transition.setItem(i, j, QtWidgets.QTableWidgetItem("NaN"))
+        self.current_table = (self.turing_machine.alphabet.index(self.turing_machine.tape_positive[self.turing_machine.current_index] if self.turing_machine.current_index >= 0 else self.turing_machine.tape_negative[-self.turing_machine.current_index - 1]), self.turing_machine.states.index(self.turing_machine.current_state))
+        cell_view = QtWidgets.QTableWidgetItem(self.table_transition.item(self.current_table[1], self.current_table[0]).text())
+        cell_view.setBackground(QtGui.QColor(64, 64, 255))
+        self.table_transition.setItem(self.current_table[0], self.current_table[1], cell_view)
+        
         self.color_machine_state(QtGui.QColor(64, 255, 64))
         self.update_machine.emit(self.turing_machine)
 
     update_machine = QtCore.Signal(TuringMachine)
     update_running = QtCore.Signal(bool)
     update_speed = QtCore.Signal(float)
+    
+    def convert_to_program(self, machine: TuringMachine):
+        str_program = f"@max_transitions: {machine.max_transitions}\n"
+        for key in machine.program:
+            str_program += f"{key.split(' ')[0]} {key.split(' ')[1]} -> {machine.program[key][0]} {machine.program[key][1]} {machine.program[key][2]}\n"
+        return str_program
 
     def convert_to_state(self, machine: TuringMachine):
         str_state = f"@current_state: {machine.current_state}\n"
@@ -386,7 +452,8 @@ class MyWidget(QtWidgets.QWidget):
         str_state += f"@alphabet: {alphabet_str}\n"
         str_state += f"@default_cell_state: {machine.default_cell_state}\n"
         regions = []
-        full_tape = [machine.tape_negative[i] for i in range(len(machine.tape_negative) - 1, -1, -1)] + machine.tape_positive
+        full_tape = [machine.tape_negative[i] for i in
+                     range(len(machine.tape_negative) - 1, -1, -1)] + machine.tape_positive
         current_region = []
         current_region_start = None
         for i in range(len(full_tape)):
@@ -441,7 +508,8 @@ class MyWidget(QtWidgets.QWidget):
         self.set_glow_on_hbox(self.timeline_cells, self.current_tick)
         self.set_glow_on_hbox(self.tape_cells, self.current_cell)
         self.text_current_state.setText(self.convert_to_state(self.turing_machine))
-        self.timeline_scroll_area.ensureWidgetVisible(self.timeline_cells.itemAt(self.current_tick).widget(), 50000, 50000)
+        self.timeline_scroll_area.ensureWidgetVisible(self.timeline_cells.itemAt(self.current_tick).widget(), 50000,
+                                                      50000)
         self.scroll_area_state.ensureWidgetVisible(self.tape_cells.itemAt(self.current_cell).widget(), 50000, 50000)
         for i in range(1000):
             button: QtWidgets.QPushButton = self.timeline_cells.itemAt(i).widget()
@@ -461,15 +529,32 @@ class MyWidget(QtWidgets.QWidget):
                         machine.tape_positive.append(machine.default_cell_state)
                 cell_state = machine.tape_positive[cell_num]
             button.setText(f"{cell_state}\n{cell_num}")
+        cell_view = QtWidgets.QTableWidgetItem(
+            self.table_transition.item(self.current_table[0], self.current_table[1]).text())
+        self.table_transition.setItem(self.current_table[0], self.current_table[1], cell_view)
+        self.current_table = (self.turing_machine.alphabet.index(self.turing_machine.tape_positive[
+                                                                     self.turing_machine.current_index] if self.turing_machine.current_index >= 0 else
+                                                                 self.turing_machine.tape_negative[
+                                                                     -self.turing_machine.current_index - 1]),
+                              self.turing_machine.states.index(self.turing_machine.current_state))
+        cell_view = QtWidgets.QTableWidgetItem(
+            self.table_transition.item(self.current_table[0], self.current_table[1]).text())
+        cell_view.setBackground(QtGui.QColor(64, 64, 255))
+        self.table_transition.setItem(self.current_table[0], self.current_table[1], cell_view)
+        self.table_transition.scrollToItem(self.table_transition.item(self.current_table[0], self.current_table[1]))
+        if not self.turing_machine.step_forward():
+            self.color_machine_state(QtGui.QColor(53, 16, 75))
+        else:
+            self.turing_machine.step_backward()
 
     def run_to_end(self):
         if self.turing_machine is None:
             return
-        if self.running:
-            self.running = False
-            self.update_running.emit(False)
+        self.running = False
+        self.update_running.emit(False)
         time.sleep(0.01)
         self.turing_machine.run_forward()
+        self.update_machine.emit(self.turing_machine)
         self.update_from_machine(self.turing_machine)
 
     def resume_pause(self):

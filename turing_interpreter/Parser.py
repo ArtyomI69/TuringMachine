@@ -18,12 +18,12 @@ def parse_state_string(str_state: str):
     reg = "^[A-Za-zА-Яа-я0-9_-]*$"
 
     # Parse the file
-    counter = 1
+    counter = 0
     start_index = float('-inf')
     prev_tape_index = prev_tape_len = float('-inf')
     for line in str_state.split("\n"):
         line_without_comments = line.split("#")[0].strip()
-
+        counter += 1
         if line_without_comments == "":
             continue
         elif line_without_comments.startswith('@current_state:'):
@@ -102,7 +102,6 @@ def parse_state_string(str_state: str):
             prev_tape_len = len(arr)
         else:
             raise MyException(f"Unable to parse line \"{line}\".\nAt line {counter}")
-        counter += 1
 
     if current_state == "#":
         raise MyException("@current_state is not defined.")
@@ -137,10 +136,10 @@ def parse_program_string(str_program: str, alphabet):
     program = {}
 
     # Parse the file
-    counter = 1
+    counter = 0
     for line in str_program.split('\n'):
         line_without_comments = line.split("#")[0].strip()
-
+        counter += 1
         if line_without_comments == "":
             continue
         elif line_without_comments.startswith('@max_transitions:'):

@@ -8,8 +8,8 @@ class TuringMachine:
         self.__current_index = state[1]
         self.__alphabet = state[2]
         self.__default_cell_state = state[3]
-        self.__tape_positive = state[4]
-        self.__tape_negative = []
+        self.__tape_negative = state[4]
+        self.__tape_positive = state[5]
         prog = parse_program_string(program_string, self.__alphabet)
         self.__max_transitions = prog[0]
         self.__program = prog[1]

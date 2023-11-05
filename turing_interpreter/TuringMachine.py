@@ -13,6 +13,7 @@ class TuringMachine:
         prog = parse_program_string(program_string, self.__alphabet)
         self.__max_transitions = prog[0]
         self.__program = prog[1]
+        self.__states = prog[2]
         self.__step_count = 0
         self.__rev = []
 
@@ -26,7 +27,9 @@ class TuringMachine:
 
     @property
     def alphabet(self):
-        return self.__alphabet
+        cur_copy = list(self.__alphabet)
+        cur_copy.sort()
+        return cur_copy
 
     @property
     def default_cell_state(self):
@@ -47,6 +50,12 @@ class TuringMachine:
     @property
     def program(self):
         return self.__program
+
+    @property
+    def states(self):
+        cur_copy = list(self.__states)
+        cur_copy.sort()
+        return cur_copy
 
     @property
     def step_count(self):

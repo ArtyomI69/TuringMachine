@@ -134,7 +134,7 @@ def parse_program_string(str_program: str, alphabet):
     max_transitions = "#"
     reg = "^[A-Za-zА-Яа-я0-9_-]*$"
     program = {}
-
+    states = set()
     # Parse the file
     counter = 0
     for line in str_program.split('\n'):
@@ -164,8 +164,10 @@ def parse_program_string(str_program: str, alphabet):
             if len(lexemes) != 5:
                 raise MyException(f"Unable to parse line \"{line}\"\nAt line {counter}")
             start_state = lexemes[0]
+            states.add(start_state)
             start_letter = lexemes[1]
             end_state = lexemes[2]
+            states.add(end_state)
             end_letter = lexemes[3]
             shift = lexemes[4]
 
@@ -195,4 +197,4 @@ def parse_program_string(str_program: str, alphabet):
     if len(program) == 0:
         raise MyException("Program is not defined.")
 
-    return max_transitions, program
+    return max_transitions, program, states

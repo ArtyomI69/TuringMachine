@@ -138,11 +138,13 @@ class MyWidget(QtWidgets.QWidget):
                 self.table_transition.setItem(row, column, new_view)
             else:
                 new_view = QtWidgets.QTableWidgetItem()
-                item, ok = QtWidgets.QInputDialog.getItem(self, "Select direction", f"Direction to move after operation",
+                item, ok = QtWidgets.QInputDialog.getItem(self, "Select direction",
+                                                          f"Direction to move after operation",
                                                           ["Left", "None", "Right"],
                                                           1, False)
                 if ok:
-                    new_view.setText(f"{self.table_transition.horizontalHeaderItem(column).text()} {self.table_transition.verticalHeaderItem(row).text()} {item}")
+                    new_view.setText(
+                        f"{self.table_transition.horizontalHeaderItem(column).text()} {self.table_transition.verticalHeaderItem(row).text()} {item}")
                     self.table_transition.setItem(self.last_cell[0], self.last_cell[1], new_view)
                     if item == "None":
                         direction = 0
@@ -150,7 +152,10 @@ class MyWidget(QtWidgets.QWidget):
                         direction = -1
                     else:
                         direction = 1
-                    self.turing_machine.program[f"{self.table_transition.horizontalHeaderItem(self.last_cell[1]).text()} {self.table_transition.verticalHeaderItem(self.last_cell[0]).text()}"] = [self.table_transition.horizontalHeaderItem(column).text(), self.table_transition.verticalHeaderItem(row).text(), direction]
+                    self.turing_machine.program[
+                        f"{self.table_transition.horizontalHeaderItem(self.last_cell[1]).text()} {self.table_transition.verticalHeaderItem(self.last_cell[0]).text()}"] = [
+                        self.table_transition.horizontalHeaderItem(column).text(),
+                        self.table_transition.verticalHeaderItem(row).text(), direction]
                     self.last_cell = None
                     self.text_program.setText(self.convert_to_program(self.turing_machine))
                     self.update_machine.emit(self.turing_machine)
@@ -427,18 +432,23 @@ class MyWidget(QtWidgets.QWidget):
                                                       f"{next_state[0]} {next_state[1]} {cur_shift}"))
                 except KeyError:
                     self.table_transition.setItem(i, j, QtWidgets.QTableWidgetItem("NaN"))
-        self.current_table = (self.turing_machine.alphabet.index(self.turing_machine.tape_positive[self.turing_machine.current_index] if self.turing_machine.current_index >= 0 else self.turing_machine.tape_negative[-self.turing_machine.current_index - 1]), self.turing_machine.states.index(self.turing_machine.current_state))
-        cell_view = QtWidgets.QTableWidgetItem(self.table_transition.item(self.current_table[1], self.current_table[0]).text())
+        self.current_table = (self.turing_machine.alphabet.index(self.turing_machine.tape_positive[
+                                                                     self.turing_machine.current_index] if self.turing_machine.current_index >= 0 else
+                                                                 self.turing_machine.tape_negative[
+                                                                     -self.turing_machine.current_index - 1]),
+                              self.turing_machine.states.index(self.turing_machine.current_state))
+        cell_view = QtWidgets.QTableWidgetItem(
+            self.table_transition.item(self.current_table[0], self.current_table[1]).text())
         cell_view.setBackground(QtGui.QColor(64, 64, 255))
         self.table_transition.setItem(self.current_table[0], self.current_table[1], cell_view)
-        
+
         self.color_machine_state(QtGui.QColor(64, 255, 64))
         self.update_machine.emit(self.turing_machine)
 
     update_machine = QtCore.Signal(TuringMachine)
     update_running = QtCore.Signal(bool)
     update_speed = QtCore.Signal(float)
-    
+
     def convert_to_program(self, machine: TuringMachine):
         str_program = f"@max_transitions: {machine.max_transitions}\n"
         for key in machine.program:

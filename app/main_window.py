@@ -452,7 +452,15 @@ class MyWidget(QtWidgets.QWidget):
     def convert_to_program(self, machine: TuringMachine):
         str_program = f"@max_transitions: {machine.max_transitions}\n"
         for key in machine.program:
-            str_program += f"{key.split(' ')[0]} {key.split(' ')[1]} -> {machine.program[key][0]} {machine.program[key][1]} {machine.program[key][2]}\n"
+            side = "R"
+            match machine.program[key][2]:
+                case 1:
+                    side = "R"
+                case -1:
+                    side = "L"
+                case _:
+                    side = "N"
+            str_program += f"{key.split(' ')[0]} {key.split(' ')[1]} -> {machine.program[key][0]} {machine.program[key][1]} {side}\n"
         return str_program
 
     def convert_to_state(self, machine: TuringMachine):

@@ -21,7 +21,6 @@ class MyTestCase(unittest.TestCase):
         tm = TuringMachine(str_state, program_string)
         assert tm.current_state == "state_seek"
         assert tm.current_index == 0
-        assert tm.alphabet == {'_', '0', '1'}
         assert tm.default_cell_state == '_'
         assert tm.tape_positive == ['_', '1', '0', '1', '0', '0', '1', '1', '0', '_', '1']
         assert tm.tape_negative == []
@@ -80,6 +79,21 @@ class MyTestCase(unittest.TestCase):
         assert tm.tape_negative == []
         assert tm.step_count == 0
 
+    def test_tm_negative(self):
+        str_state = '@current_state: state_seek\n' \
+                    '@current_index: 0\n' \
+                    '@alphabet: _ 0 1\n' \
+                    '@default_cell_state: _\n' \
+                    '#------------------------\n' \
+                    '0: _ 1 0 1 0 2 1 1 0 _ 1'
+        program_string = '@max_transitions: 100\n' \
+                         'state_seek _ -> state_seek _ R\n' \
+                         'state_seek 0 -> state_invert 0 N\n' \
+                         'state_seek 1 -> state_invert 1 N\n' \
+                         'state_invert 0 -> state_invert 1 R\n' \
+                         'state_invert 1 -> state_invert 0 R\n' \
+                         'state_invert _ -> state_stop _ N'
+        assert MyException, lambda: TuringMachine(str_state, program_string)
 
 if __name__ == '__main__':
     unittest.main()

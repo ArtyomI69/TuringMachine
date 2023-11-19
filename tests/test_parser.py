@@ -12,10 +12,9 @@ class TestTuringMachine(unittest.TestCase):
                     '@default_cell_state: _\n' \
                     '#------------------------\n' \
                     '0: _ 1 0 1 0 0 1 1 0 _ 1'
-        assert (parse_state_string(str_state) ==
-                ('state_seek', 0, {'0', '1', '_'}, '_', ['_', '1', '0', '1', '0', '0', '1', '1', '0', '_', '1']))
+        assert parse_state_string(str_state), ('state_seek', 0, {'0', '1', '_'}, '_', ['_', '1', '0', '1', '0', '0', '1', '1', '0', '_', '1'])
 
-        # Test for invalid input
+    def test_parse_invalid_input(self):
         str_state = "@current_state: state_seek\n" \
                     "@current_index: 0\n" \
                     "@alphabet: _ 0 1\n" \
@@ -24,8 +23,7 @@ class TestTuringMachine(unittest.TestCase):
                     "0: _ 1 0 1 0 0 1 1 0 _ 1"
         assert (parse_state_string(str_state) !=
                 ('state_seek', 0, {'_', '0', '1'}, '_', ['_', '0', '1', '0', '1', '1', '0', '0', '1', '_', '1']))
-
-        # Test for invalid alphabet
+    def test_parse_invalid_alphabet(self):
         str_state = "@current_state: state_seek\n" \
                     "@current_index: 0\n" \
                     "@alphabet: _ 0 1\n" \
@@ -35,7 +33,7 @@ class TestTuringMachine(unittest.TestCase):
         assert (parse_state_string(str_state) !=
                 ('state_seek', 0, {'0', '1', '_'}, '_', ['_', '1', '0', '1', '3', '4', '1', '1', '0', '_', '2']))
 
-        # Test for invalid tape index
+    def test_parse_invalid_tape_index(self):
         str_state = "@current_state: state_seek\n" \
                     "@current_index: 1\n" \
                     "@alphabet: _ 0 1\n" \
@@ -45,7 +43,7 @@ class TestTuringMachine(unittest.TestCase):
         assert (parse_state_string(str_state) !=
                 ('state_seek', 0, {'0', '1', '_'}, '_', ['_', '1', '0', '1', '0', '0', '1', '1', '0', '_', '1']))
 
-        # Test for negative tape index
+    def test_parse_negative_tape_index(self):
         str_state = "@current_state: state_seek\n" \
                     "@current_index: -2\n" \
                     "@alphabet: _ 0 1\n" \
@@ -54,7 +52,7 @@ class TestTuringMachine(unittest.TestCase):
                     "0: _ 1 0 1 0 0 1 1 0 _ 1"
         assert MyException, lambda: parse_state_string(str_state)
 
-        # Test for multiple definitions of current state
+    def test_parse_negative_multiple_definitions_of_current_state(self):
         str_state = "@current_state: state_seek\n" \
                     "@current_state: q1\n" \
                     "@current_index: 0\n" \
@@ -64,7 +62,7 @@ class TestTuringMachine(unittest.TestCase):
                     "0: _ 1 0 1 0 0 1 1 0 _ 1"
         assert MyException, lambda: parse_state_string(str_state)
 
-        # Test for multiple definitions of current index
+    def test_parse_negative_multiple_definitions_of_current_index(self):
         str_state = "@current_state: state_seek\n" \
                     "@current_index: 0\n" \
                     "@current_index: 1\n" \
@@ -74,7 +72,7 @@ class TestTuringMachine(unittest.TestCase):
                     "0: _ 1 0 1 0 0 1 1 0 _ 1"
         assert MyException, lambda: parse_state_string(str_state)
 
-        # Test for multiple definitions of alphabet
+    def test_parse_negative_multiple_definitions_of_alphabet(self):
         str_state = "@current_state: state_seek\n" \
                     "@current_index: 0\n" \
                     "@alphabet: _ 0 1\n" \
@@ -84,7 +82,7 @@ class TestTuringMachine(unittest.TestCase):
                     "0: _ 1 0 1 0 0 1 1 0 _ 1"
         assert MyException, lambda: parse_state_string(str_state)
 
-        # Test for multiple definitions of default cell state
+    def test_parse_negative_multiple_definitions_of_default_cell_state(self):
         str_state = "@current_state: state_seek\n" \
                     "@current_index: 0\n" \
                     "@alphabet: _ 0 1\n" \
@@ -95,7 +93,6 @@ class TestTuringMachine(unittest.TestCase):
         assert MyException, lambda: parse_state_string(str_state)
 
     def test_parse_program_string(self):
-        # Test for valid input
         str_program = "@max_transitions: 100\n" \
                       "state_seek _ -> state_seek _ R\n" \
                       "state_seek 0 -> state_invert 0 N\n" \
@@ -103,7 +100,7 @@ class TestTuringMachine(unittest.TestCase):
                       "state_invert 0 -> state_invert 1 R\n" \
                       "state_invert 1 -> state_invert 0 R\n" \
                       "state_invert _ -> state_stop _ N"
-        assert parse_program_string(str_program, {'_', '0', '1'}) == (100,
+        assert parse_program_string(str_program, {'_', '0', '1'}), (100,
                                                                       {'state_seek _': ['state_seek', '_', 1],
                                                                        'state_seek 0': ['state_invert', '0', 0],
                                                                        'state_seek 1': ['state_invert', '1', 0],
@@ -111,7 +108,7 @@ class TestTuringMachine(unittest.TestCase):
                                                                        'state_invert 1': ['state_invert', '0', 1],
                                                                        'state_invert _': ['state_stop', '_', 0]})
 
-        # Test for invalid input
+    def test_parse_program_string_negative_invalid_input(self):
         str_program = "@max_transitions: 100\n" \
                       "state_seek _ -> state_seek _ R\n" \
                       "state_seek 0 -> state_invert 0 N\n" \
@@ -127,7 +124,7 @@ class TestTuringMachine(unittest.TestCase):
             ('q4', '0'): ('q5', '1', 'R')
         })
 
-        # Test for invalid end letter
+    def test_parse_program_string_negative_invalid_end_letter(self):
         str_program = "@max_transitions: 100\n" \
                       "q0 0 q1 - R\n" \
                       "q1 1 q2 0 L\n" \

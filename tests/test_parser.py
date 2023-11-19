@@ -5,14 +5,15 @@ from turing_interpreter.MyException import *
 
 class TestTuringMachine(unittest.TestCase):
     def test_parse_state_string(self):
-        # Test for valid input
         str_state = '@current_state: state_seek\n' \
                     '@current_index: 0\n' \
                     '@alphabet: _ 0 1\n' \
                     '@default_cell_state: _\n' \
                     '#------------------------\n' \
                     '0: _ 1 0 1 0 0 1 1 0 _ 1'
-        assert parse_state_string(str_state), ('state_seek', 0, {'0', '1', '_'}, '_', ['_', '1', '0', '1', '0', '0', '1', '1', '0', '_', '1'])
+        assert parse_state_string(str_state), \
+            ('state_seek', 0, {'0', '1', '_'}, '_',
+             ['_', '1', '0', '1', '0', '0', '1', '1', '0', '_', '1'])
 
     def test_parse_invalid_input(self):
         str_state = "@current_state: state_seek\n" \
@@ -33,7 +34,7 @@ class TestTuringMachine(unittest.TestCase):
         assert (parse_state_string(str_state) !=
                 ('state_seek', 0, {'0', '1', '_'}, '_', ['_', '1', '0', '1', '3', '4', '1', '1', '0', '_', '2']))
 
-    def test_parse_invalid_tape_index(self):
+    def test_parse_negative_invalid_tape_index(self):
         str_state = "@current_state: state_seek\n" \
                     "@current_index: 1\n" \
                     "@alphabet: _ 0 1\n" \

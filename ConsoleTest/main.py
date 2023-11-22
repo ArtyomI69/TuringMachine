@@ -1,3 +1,4 @@
+from turing_interpreter.CaesarСipher import *
 from turing_interpreter.TuringMachine import TuringMachine
 
 if __name__ == '__main__':
@@ -16,4 +17,6 @@ if __name__ == '__main__':
     # print(tm)
     print(tm.tape_positive)
     print(tm.tape_negative)
+
+    print(generate_program_string_caesar(get_language_arrays(), 3, 10000))
 

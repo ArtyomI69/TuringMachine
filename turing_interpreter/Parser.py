@@ -15,7 +15,7 @@ def parse_state_string(str_state: str):
     # Initialize variables
     current_state = current_index = alphabet = default_cell_state = "#"
     tape = []
-    reg = "^[A-Za-zА-Яа-я0-9_-]*$"
+    reg = "^[A-Za-zА-ЯЁа-яё0-9_-]*$"
 
     # Parse the file
     counter = 0
@@ -56,10 +56,6 @@ def parse_state_string(str_state: str):
             if len(lst) != 2:
                 raise MyException(f"Unable to parse line \"{line}\" (too many \":\").\nAt line {counter}")
             alp = set(lst[1].strip().split())
-            for s in alp:
-                if not re.match(reg, s):
-                    raise MyException(f"\"{s}\" couldn't be an alphabet letter "
-                                      f"(acceptable characters - letters, digits, \'-\', \'_\').\nAt line {counter}")
             alphabet = alp
         elif line_without_comments.startswith('@default_cell_state:'):
             if default_cell_state != "#":
@@ -132,7 +128,7 @@ def parse_state_string(str_state: str):
 def parse_program_string(str_program: str, alphabet):
     # Initialize variables
     max_transitions = "#"
-    reg = "^[A-Za-zА-Яа-я0-9_-]*$"
+    reg = "^[A-Za-zА-ЯЁа-яё0-9_-]*$"
     program = {}
     states = set()
     # Parse the file
@@ -160,7 +156,7 @@ def parse_program_string(str_program: str, alphabet):
                 raise MyException(f"@max_transitions ({n}) can't be negative.\nAt line {counter}")
             max_transitions = n
         else:
-            lexemes = [lex for lex in re.split('[ |\n]', line) if (lex != "" and lex != '->')]
+            lexemes = [lex for lex in line.split() if (lex != "" and lex != '->')]
             if len(lexemes) != 5:
                 raise MyException(f"Unable to parse line \"{line}\"\nAt line {counter}")
             start_state = lexemes[0]

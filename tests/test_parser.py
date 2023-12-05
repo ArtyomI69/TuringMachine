@@ -1,9 +1,12 @@
 import unittest
+
+import pytest
+
 from turing_interpreter.Parser import *
 from turing_interpreter.MyException import *
 
 
-class TestTuringMachine(unittest.TestCase):
+class TestParser(unittest.TestCase):
     def test_parse_state_string(self):
         str_state = '@current_state: state_seek\n' \
                     '@current_index: 0\n' \
@@ -93,6 +96,42 @@ class TestTuringMachine(unittest.TestCase):
                     "0: _ 1 0 1 0 0 1 1 0 _ 1"
         assert MyException, lambda: parse_state_string(str_state)
 
+    def test_parse_state_string_current_state_missing(self):
+        str_state = '@current_index: 0\n' \
+                    '@alphabet: _ 0 1\n' \
+                    '@default_cell_state: _\n' \
+                    '#------------------------\n' \
+                    '0: _ 1 0 1 0 0 1 1 0 _ 1'
+        with pytest.raises(MyException):
+            parse_state_string(str_state)
+
+    def test_parse_state_string_invalid_current_index(self):
+        str_state = '@current_state: state_seek\n' \
+                    '@current_index: invalid_index\n' \
+                    '@alphabet: _ 0 1\n' \
+                    '@default_cell_state: _\n' \
+                    '#------------------------\n' \
+                    '0: _ 1 0 1 0 0 1 1 0 _ 1'
+        with pytest.raises(MyException):
+            parse_state_string(str_state)
+
+    def test_parse_state_string_missing_tape_definition(self):
+        str_state = '@current_state: state_seek\n' \
+                    '@current_index: 0\n' \
+                    '@alphabet: _ 0 1\n' \
+                    '@default_cell_state: _\n'
+        with pytest.raises(MyException):
+            parse_state_string(str_state)
+
+    def test_parse_state_string_invalid_default_cell_state(self):
+        str_state = '@current_state: state_seek\n' \
+                    '@current_index: 0\n' \
+                    '@alphabet: _ 0 1\n' \
+                    '@default_cell_state: invalid_default_state\n' \
+                    '#------------------------\n' \
+                    '0: _ 1 0 1 0 0 1 1 0 _ 1'
+        with pytest.raises(MyException):
+            parse_state_string(str_state)
     def test_parse_program_string(self):
         str_program = "@max_transitions: 100\n" \
                       "state_seek _ -> state_seek _ R\n" \

@@ -3,7 +3,7 @@ import unittest
 from turing_interpreter.TuringMachine import *
 
 
-class MyTestCase(unittest.TestCase):
+class TestTuringMachine(unittest.TestCase):
     def test_tm(self):
         str_state = '@current_state: state_seek\n' \
                     '@current_index: 0\n' \

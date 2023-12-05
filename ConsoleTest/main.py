@@ -20,6 +20,13 @@ if __name__ == '__main__':
     # print(tm)
     # tm.run()
     # print(tm)
+    str = '@current_state: state_seek\n' \
+                '@current_index: 0\n' \
+                '@alphabet: _ 0 1\n' \
+                '@default_cell_state: _\n' \
+                '#------------------------\n' \
+                '0: _ 1 0 1 0 0 1 1 0 _ 1'
+
     print(' '.join(map(str, tm.tape_positive)))
 
     tm.run_forward()

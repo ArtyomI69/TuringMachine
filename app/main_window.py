@@ -1,11 +1,12 @@
-﻿import sys
+﻿import os
+import sys
 
 sys.path.append("./")
 import time
 import typing
 import asyncio
 
-from PySide6 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets, QtGui, QtWebEngineWidgets
 from turing_interpreter.TuringMachine import *
 
 
@@ -35,11 +36,14 @@ class MyWidget(QtWidgets.QWidget):
         self.program_page_ui()
         self.options_page = QtWidgets.QWidget(self)
         self.options_page_ui()
+        self.doc_page = QtWidgets.QWidget(self)
+        self.doc_page_ui()
 
         self.layout = QtWidgets.QTabWidget(self)
         self.layout.addTab(self.tabular_page, "Tabular")
         self.layout.addTab(self.program_page, "Program")
         self.layout.addTab(self.options_page, "Options")
+        self.layout.addTab(self.doc_page, "Docs")
 
         self.main_layout = QtWidgets.QVBoxLayout(self)
         self.main_layout.addWidget(self.layout)
@@ -353,6 +357,14 @@ class MyWidget(QtWidgets.QWidget):
         hbox_transition_speed.addWidget(checkbox_transition_speed)
         hbox_transition_speed.addWidget(slider_transition_speed)
         hbox_transition_speed.addWidget(text_transition_speed)
+    
+    def doc_page_ui(self):
+        layout = QtWidgets.QVBoxLayout(self.doc_page)
+        button = QtWidgets.QPushButton("Open documentation")
+        def open_docs():
+            os.startfile(f'{os.getcwd()}/Docs.html')
+        button.clicked.connect(open_docs)
+        layout.addWidget(button)
 
     def drop_glow_on_hbox(self, hbox: QtWidgets.QHBoxLayout, index: int):
         cell = typing.cast(QtWidgets.QPushButton, hbox.itemAt(index).widget())
